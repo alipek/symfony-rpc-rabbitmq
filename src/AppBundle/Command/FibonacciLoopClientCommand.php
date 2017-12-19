@@ -36,7 +36,6 @@ class FibonacciLoopClientCommand extends ContainerAwareCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
 
-        \define('AMQP_DEBUG', true);
         while (true) {
             for ($i = 1; $i < 50; $i++) {
 
