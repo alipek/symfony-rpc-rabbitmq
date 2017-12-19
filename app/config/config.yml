@@ -65,3 +65,40 @@ swiftmailer:
     username: '%mailer_user%'
     password: '%mailer_password%'
     spool: { type: memory }
+
+old_sound_rabbit_mq:
+    connections:
+        default:
+            host:     'queue'
+            port:     5672
+            user:     'queue'
+            password: 'queue'
+            vhost:    '/'
+            lazy:     false
+            connection_timeout: 3
+            read_write_timeout: 3
+
+            # requires php-amqplib v2.4.1+ and PHP5.4+
+            keepalive: false
+
+            # requires php-amqplib v2.4.1+
+            heartbeat: 0
+
+            #requires php_sockets.dll
+            use_socket: false # default false
+
+    rpc_clients:
+        fibonacci:
+            connection: default #default: default
+            unserializer: json_decode #default: unserialize
+            lazy: true #default: false
+            direct_reply_to: false
+
+    rpc_servers:
+        fibonacci:
+            connection: default
+            callback:   AppBundle\Server\Fibonacci
+            qos_options: {prefetch_size: 0, prefetch_count: 1, global: false}
+            exchange_options: {name: 'symfony-rpc', type: topic}
+            queue_options: {name: fibonacci, durable: false, auto_delete: true}
+            serializer: json_encode
