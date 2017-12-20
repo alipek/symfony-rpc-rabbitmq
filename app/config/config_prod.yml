@@ -17,7 +17,16 @@ monolog:
             type: stream
             path: '%kernel.logs_dir%/%kernel.environment%.log'
             level: debug
-        console:
-            type: console
+        console_stderr:
+            type: stream
+            path: 'php://stderr'
             process_psr_3_messages: false
-            formatter: 'monolog.formatter.logstash'
+            formatter: 'monolog.formatter.json'
+            level: WARNING
+            bubble: false
+        console_stdout:
+            type: stream
+            path: 'php://stdout'
+            process_psr_3_messages: false
+            formatter: 'monolog.formatter.json'
+            level: INFO

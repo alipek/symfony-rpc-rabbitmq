@@ -11,9 +11,17 @@ namespace AppBundle\Server;
 
 use OldSound\RabbitMqBundle\RabbitMq\ConsumerInterface;
 use PhpAmqpLib\Message\AMQPMessage;
+use Psr\Log\LoggerInterface;
 
 class Fibonacci implements ConsumerInterface
 {
+    protected $logger;
+
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
+
 
     /**
      * @param AMQPMessage $msg The message
@@ -22,8 +30,12 @@ class Fibonacci implements ConsumerInterface
     public function execute(AMQPMessage $msg)
     {
 
+        $start = \microtime(true);
         $number = $msg->getBody();
         $result = $this->getFib($number);
+        $this->logger->info('Response time: {time}', [
+            'time' => \microtime(true) - $start
+        ]);
         return $result;
     }
     private  function getFib($n)
