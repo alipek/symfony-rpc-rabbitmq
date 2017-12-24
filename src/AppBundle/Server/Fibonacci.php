@@ -33,8 +33,9 @@ class Fibonacci implements ConsumerInterface
         $start = \microtime(true);
         $number = $msg->getBody();
         $result = $this->getFib($number);
+        $time = \microtime(true) - $start;
         $this->logger->info('Response time: {time}', [
-            'time' => \microtime(true) - $start
+            'time' => $time
         ]);
         return $result;
     }

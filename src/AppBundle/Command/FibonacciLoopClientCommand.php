@@ -39,20 +39,18 @@ class FibonacciLoopClientCommand extends ContainerAwareCommand
         while (true) {
             for ($i = 1; $i < 50; $i++) {
 
-                $requestId = \uniqid("{$i}", false);
+                $requestId = \uniqid("{$i}_", false);
                 $client = $this->getContainer()->get('old_sound_rabbit_mq.fibonacci_rpc');
                 $client->addRequest($i, 'symfony-rpc', $requestId);
-                $client->addRequest($i + 1, 'symfony-rpc', $requestId . '2');
-                $this->logger->info("Send request '{request}'", [
+                $this->logger->info("Send request '{$requestId}'", [
                     'request' => $i,
                     'requestId' => $requestId,
                 ]);
-                $response = $client->getReplies();
-                $this->logger->info("Getting response '{response}' for request '{request}'", [
-                    'response' => $response[$requestId],
-                    'response2' => $response[$requestId . '2'],
-                    'request' => $i,
-                    'requestId' => $requestId,
+                $replies = $client->getReplies();
+                $response = $replies[$requestId];
+                $this->logger->info("Getting replies '{$response}' for request '{$requestId}'", [
+                    'response' => $replies[$requestId],
+                    'request' => $i
                 ]);
 
             }
