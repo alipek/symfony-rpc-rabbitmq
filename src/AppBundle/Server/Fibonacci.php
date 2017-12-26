@@ -34,8 +34,9 @@ class Fibonacci implements ConsumerInterface
         $number = $msg->getBody();
         $result = $this->getFib($number);
         $time = \microtime(true) - $start;
-        $this->logger->info("Response time: {$time}", [
-            'time' => $time
+        $correlationId = $msg->get('correlation_id');
+        $this->logger->info("Response time: {$time} for request {$correlationId}", [
+            'time' => $time,
         ]);
         return $result;
     }
