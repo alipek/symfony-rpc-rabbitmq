@@ -69,10 +69,10 @@ swiftmailer:
 old_sound_rabbit_mq:
     connections:
         default:
-            host:     'queue'
+            host:     '%amqp_host%'
             port:     5672
-            user:     'queue'
-            password: 'queue'
+            user:     '%amqp_user%'
+            password: '%amqp_password%'
             vhost:    '/'
             lazy:     false
             connection_timeout: 3

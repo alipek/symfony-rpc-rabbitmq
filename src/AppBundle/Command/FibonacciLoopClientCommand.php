@@ -2,6 +2,8 @@
 
 namespace AppBundle\Command;
 
+use AppBundle\Client\Fibonacci;
+use AppBundle\Client\FibonacciRpcClient;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
@@ -13,6 +15,10 @@ class FibonacciLoopClientCommand extends ContainerAwareCommand
      * @var LoggerInterface
      */
     protected $logger;
+    /** @var FibonacciRpcClient */
+    protected $client;
+    /** @var Fibonacci */
+    protected $fibonacci;
 
     public function __construct(LoggerInterface $logger)
     {
@@ -37,21 +43,15 @@ class FibonacciLoopClientCommand extends ContainerAwareCommand
     {
 
         while (true) {
-            for ($i = 1; $i < 50; $i++) {
+            for ($i = 1; $i < 5; $i++) {
 
                 $requestId = \uniqid("{$i}_", false);
-                $client = $this->getContainer()->get('old_sound_rabbit_mq.fibonacci_rpc');
-                $client->addRequest($i, 'symfony-rpc', $requestId);
+                $this->fibonacci = $this->getContainer()->get(Fibonacci::class);
                 $this->logger->info("Send request '{$requestId}'", [
                     'request' => $i,
                     'requestId' => $requestId,
                 ]);
-                $replies = $client->getReplies();
-                $response = $replies[$requestId];
-                $this->logger->info("Getting replies '{$response}' for request '{$requestId}'", [
-                    'response' => $replies[$requestId],
-                    'request' => $i
-                ]);
+                $this->fibonacci->fibonacci($i);
 
             }
             \sleep(5);

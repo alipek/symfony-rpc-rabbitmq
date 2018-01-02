@@ -17,3 +17,7 @@ parameters:
 
     # A secret key that's used to generate certain security-related tokens
     secret: ThisTokenIsNotSoSecretChangeIt
+
+    amqp_host: '%env(RABBITMQ_HOST)%'
+    amqp_user: '%env(RABBITMQ_USER)%'
+    amqp_password: '%env(RABBITMQ_PASS)%'

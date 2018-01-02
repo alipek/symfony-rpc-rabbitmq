@@ -1,0 +1,16 @@
+
+services:
+  AppBundle\Client\Fibonacci:
+    tags:
+      - { name: 'rpc_client', exchange: 'rpc_server'}
+
+  Humus\Amqp\Driver\AmqpExtension\Connection:
+    arguments:
+      - { host: '%amqp_host%', login: '%amqp_user%', password: '%amqp_password%' }
+
+  Humus\Amqp\Driver\AmqpExtension\Channel:
+    factory: 'Humus\Amqp\Driver\AmqpExtension\Connection:newChannel'
+
+  ProxyManager\Factory\RemoteObjectFactory:
+    arguments:
+      - '@AppBundle\Queue\ProxyAdapter'

@@ -35,10 +35,12 @@ class Fibonacci implements ConsumerInterface
         $result = $this->getFib($number);
         $time = \microtime(true) - $start;
         $correlationId = $msg->get('correlation_id');
-        $this->logger->info("Response time: {$time} for request {$correlationId}", [
+        $this->logger->info("Response time: {$time} for request id:{$correlationId}, param:{$number}", [
             'time' => $time,
         ]);
-        return $result;
+        return [
+            'result' => $result,
+        ];
     }
     private  function getFib($n)
     {
