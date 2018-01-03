@@ -3,7 +3,7 @@
 namespace AppBundle\Command;
 
 use AppBundle\Client\Fibonacci;
-use AppBundle\Client\FibonacciRpcClient;
+use AppBundle\Queue\RpcExchanges;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
@@ -15,12 +15,10 @@ class FibonacciLoopClientCommand extends ContainerAwareCommand
      * @var LoggerInterface
      */
     protected $logger;
-    /** @var FibonacciRpcClient */
-    protected $client;
     /** @var Fibonacci */
     protected $fibonacci;
 
-    public function __construct(LoggerInterface $logger)
+    public function __construct(LoggerInterface $logger, RpcExchanges $exchanges)
     {
         $this->logger = $logger;
         parent::__construct();

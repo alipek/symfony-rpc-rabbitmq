@@ -13,6 +13,7 @@ use AppBundle\Queue\ProxyAdapter;
 use AppBundle\Queue\RpcClientQueueFactory;
 use AppBundle\Queue\RpcExchanges;
 use Humus\Amqp\Driver\AmqpExtension\Channel;
+use Humus\Amqp\Driver\AmqpExtension\Connection;
 use Humus\Amqp\Driver\AmqpExtension\Exchange;
 use Humus\Amqp\Driver\AmqpExtension\Queue;
 use Humus\Amqp\JsonRpc\JsonRpcClient;
@@ -32,13 +33,14 @@ class RpcClientsCompiler implements CompilerPassInterface
     {
         $services = $container->findTaggedServiceIds('rpc_client');
 
+        $container->getDefinition(Connection::class)->addMethodCall('connect');
         $exchanges = $this->declareExchanges($services, $container);
         $defClientQueue = new Definition(Queue::class);
         $defClientQueue->setFactory([new Reference(RpcClientQueueFactory::class), 'create',]);
         $proxyClientQueue = 'app.json_rpc.client_queue.default';
         $container->setDefinition($proxyClientQueue, $defClientQueue);
 
-        $defExchangesCollection = new Definition('\stdClass');
+        $defExchangesCollection = new Definition(RpcExchanges::class);
         $defExchangesCollection->setFactory([new Reference(RpcExchanges::class), 'getExchanges',]);
         $defExchangesName = 'app.json_rpc.exchanges.default';
         $container->setDefinition($defExchangesName, $defExchangesCollection);
@@ -52,7 +54,7 @@ class RpcClientsCompiler implements CompilerPassInterface
             $definition = new Definition($serviceName);
             $definition->setFactory([new Reference(RemoteObjectFactory::class), 'createProxy',]);
             $definition->setArgument(0, $serviceName);
-            $id = "app.json_rpc.client_proxy.{$serviceName}";
+            $id = "app.json_rpc.client_proxy.{$shortName}";
             $container->setDefinition($id, $definition);
             $container->setAlias($serviceName, $id);
 
