@@ -56,6 +56,6 @@ class ProxyAdapter implements AdapterInterface
             $error = $response->error();
             $this->logger->warning($error->message());
         }
-        return $response;
+        return $response->result();
     }
 }

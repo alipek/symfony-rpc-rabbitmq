@@ -1,4 +1,4 @@
-FROM php:7.1-cli-alpine
+FROM php:7.2-cli-alpine
 
 RUN docker-php-ext-install -j$(cat /proc/cpuinfo | grep processor | wc -l) bcmath \
         && apk --no-cache add wget git autoconf cmake build-base openssl-dev \

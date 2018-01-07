@@ -3,13 +3,14 @@ services:
   _defaults:
     autowire: true
     autoconfigure: true
-    public: public
+    public: true
 
 
   AppBundle\:
     resource: '../../../AppBundle/*'
 
   AppBundle\Client\Fibonacci:
+    public: true
     tags:
       - { name: 'rpc_client', exchange: 'rpc_server'}
 

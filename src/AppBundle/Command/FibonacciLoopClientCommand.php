@@ -18,9 +18,10 @@ class FibonacciLoopClientCommand extends ContainerAwareCommand
     /** @var Fibonacci */
     protected $fibonacci;
 
-    public function __construct(LoggerInterface $logger, RpcExchanges $exchanges)
+    public function __construct(LoggerInterface $logger, RpcExchanges $exchanges, Fibonacci $client)
     {
         $this->logger = $logger;
+        $this->fibonacci = $client;
         parent::__construct();
     }
 
@@ -44,12 +45,13 @@ class FibonacciLoopClientCommand extends ContainerAwareCommand
             for ($i = 1; $i < 5; $i++) {
 
                 $requestId = \uniqid("{$i}_", false);
-                $this->fibonacci = $this->getContainer()->get(Fibonacci::class);
+//                $this->fibonacci = $this->getContainer()->get(Fibonacci::class);
                 $this->logger->info("Send request '{$requestId}'", [
                     'request' => $i,
                     'requestId' => $requestId,
                 ]);
-                $this->fibonacci->fibonacci($i);
+                $response = $this->fibonacci->fibonacci($i);
+                $this->logger->info("Response {$response}");
 
             }
             \sleep(5);
