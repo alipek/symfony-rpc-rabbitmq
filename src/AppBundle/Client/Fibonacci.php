@@ -9,7 +9,9 @@
 namespace AppBundle\Client;
 
 
+use GuzzleHttp\Promise\PromiseInterface;
+
 interface Fibonacci
 {
-    public function fibonacci(int $num);
+    public function fibonacci(int $num): PromiseInterface;
 }

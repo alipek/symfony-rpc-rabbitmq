@@ -50,8 +50,10 @@ class FibonacciLoopClientCommand extends ContainerAwareCommand
                     'request' => $i,
                     'requestId' => $requestId,
                 ]);
-                $response = $this->fibonacci->fibonacci($i);
-                $this->logger->info("Response {$response}");
+                $promise = $this->fibonacci->fibonacci($i);
+                $promise->then(function ($response) {
+                    $this->logger->info("Response {$response}");
+                });
 
             }
             \sleep(5);
