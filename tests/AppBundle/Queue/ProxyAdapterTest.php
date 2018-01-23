@@ -10,6 +10,8 @@ namespace Tests\AppBundle\Queue;
 
 use AppBundle\Client\Fibonacci;
 use AppBundle\Queue\ProxyAdapter;
+use function GuzzleHttp\Promise\all;
+use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Promise\PromiseInterface;
 use function GuzzleHttp\Promise\settle;
 use Humus\Amqp\JsonRpc\Client;
@@ -29,7 +31,7 @@ class ProxyAdapterTest extends TestCase
         $proxyAdapter = new ProxyAdapter($jsonRpcClient, $logger);
         $responseCollection = $this->createMock(ResponseCollection::class);
 
-        $jsonRpcClient->expects($this->any())->method('getResponseCollection')->willReturn($responseCollection);
+        $jsonRpcClient->expects($this->once())->method('getResponseCollection')->willReturn($responseCollection);
 
         $rpcResponse = $this->createMock(Response::class);
         $rpcResponse->expects($this->any())->method('result')->willReturn(2);
@@ -40,26 +42,35 @@ class ProxyAdapterTest extends TestCase
 
         $proxyAdapter->addClassExchange(Fibonacci::class, 'exchange');
 
-        $promiseFirst = $proxyAdapter->call(Fibonacci::class, 'fibonacci', []);
-        $promiseSecond = $proxyAdapter->call(Fibonacci::class, 'fibonacci', []);
+        $promiseFirst = $proxyAdapter
+            ->call(Fibonacci::class, 'fibonacci', [])
+            ->then(function (&$result) {
+                return $result = ($result * 2);
+            });
+        $promiseSecond = $proxyAdapter
+            ->call(Fibonacci::class, 'fibonacci', [])
+            ->then(function ($result) {
+                return new FulfilledPromise($result * 4);
+            });
 
         $this->assertInstanceOf(PromiseInterface::class, $promiseFirst);
         $this->assertInstanceOf(PromiseInterface::class, $promiseSecond);
 
+
         $result = settle([
-            $promiseFirst,
-            $promiseSecond,
+            'a' => $promiseFirst,
+            'b' => $promiseSecond,
         ])->wait();
 
         $this->assertEquals(
             [
-                [
+                'a' => [
                     'state' => 'fulfilled',
-                    'value' => 2,
+                    'value' => 4,
                 ],
-                [
+                'b' => [
                     'state' => 'fulfilled',
-                    'value' => 2,
+                    'value' => 8,
                 ],
             ],
             $result);
@@ -90,8 +101,10 @@ class ProxyAdapterTest extends TestCase
         $this->assertInstanceOf(PromiseInterface::class, $promiseFirst);
         $this->assertInstanceOf(PromiseInterface::class, $promiseSecond);
 
-        $result = $promiseFirst->wait();
-        $this->assertEquals(2, $result);
+        $result = $promiseFirst->then(function ($value) {
+            return new FulfilledPromise($value * 2);
+        })->wait();
+        $this->assertEquals(4, $result);
 
     }
 }

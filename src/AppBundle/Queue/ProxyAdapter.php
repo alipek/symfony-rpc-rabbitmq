@@ -11,9 +11,12 @@ namespace AppBundle\Queue;
 
 use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Promise\PromiseInterface;
+use function GuzzleHttp\Promise\queue;
+use GuzzleHttp\Promise\RejectedPromise;
 use Humus\Amqp\JsonRpc\Client;
 use Humus\Amqp\JsonRpc\JsonRpcClient;
 use Humus\Amqp\JsonRpc\JsonRpcRequest;
+use Humus\Amqp\JsonRpc\ResponseCollection;
 use ProxyManager\Factory\RemoteObject\AdapterInterface;
 use Psr\Log\LoggerInterface;
 
@@ -24,6 +27,10 @@ class ProxyAdapter implements AdapterInterface
     /** @var LoggerInterface */
     protected $logger;
     protected $classes = [];
+    /**
+     * @var ResponseCollection
+     */
+    protected $responses;
     /** @var array|PromiseInterface[] */
     private $handleIds = [];
 
@@ -51,44 +58,51 @@ class ProxyAdapter implements AdapterInterface
      */
     public function call(string $wrappedClass, string $method, array $params = []): Promise
     {
+
+
         if (!isset($this->classes[$wrappedClass])) {
             throw new \LogicException("Not defined exchage for class: {$wrappedClass}");
         }
         $serverName = $this->classes[$wrappedClass];
-        $id = \uniqid('id', true);
 
-        $promise = new Promise(
+        $queue = queue();
+        $id = \uniqid('id', true);
+        $queue->add(function () use ($serverName, $method, $params) {
+            $request = new JsonRpcRequest($serverName, $method, $params);
+            $this->client->addRequest($request);
+        });
+        $promise = (new Promise(
             [$this, 'execute'],
             function () use ($id) {
                 return $this->cancel($id);
             }
-        );
-
-        $this->client->addRequest(new JsonRpcRequest($serverName, $method, $params, $id));
-        $this->handleIds[$id] = $promise;
-
-        return $promise;
-    }
-
-    public function execute()
-    {
-        $responses = $this->client->getResponseCollection();
-        foreach ($this->handleIds as $handleId => $promise) {
-            $response = $responses->getResponse($handleId);
-
+        ));
+        $queue->add(function () use ($id, $promise) {
+            $response = $this->responses->getResponse($id);
             if (null !== $response) {
                 $error = $response->error();
                 if (null !== $error) {
                     $this->logger->warning($error->message());
-                    $promise->reject($error);
+                    $promise->reject(new RejectedPromise($error));
+
                 } else {
                     $promise->resolve($response->result());
                 }
 
             } else {
-                $promise->reject(new \RuntimeException('Null Exception'));
+                $promise->reject(new RejectedPromise(new \RuntimeException('Null Exception')));
             }
-        }
+        });
+        $this->handleIds[$id] = $promise;
+        return $promise;
+
+    }
+
+    public function execute()
+    {
+        $queue = queue();
+        $this->responses = $this->client->getResponseCollection();
+        $queue->run();
 
     }
 
